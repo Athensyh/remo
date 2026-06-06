@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合同审查助手 - 后台管理</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h1>🔐 后台管理系统</h1>
+            <p class="login-subtitle">合同审查助手管理后台</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>管理员密码</label>
+                    <input type="password" id="passwordInput" placeholder="请输入管理员密码" required>
+                </div>
+                <button type="submit" class="btn-login">登录</button>
+                <p class="login-error" id="loginError"></p>
+            </form>
+        </div>
+    </div>
+
+    <div class="admin-container" id="adminContainer" style="display: none;">
+        <nav class="admin-navbar">
+            <h1>📊 合同审查助手 - 后台管理</h1>
+            <div class="navbar-right">
+                <span class="user-info">管理员</span>
+                <button class="btn-logout" id="logoutBtn">退出登录</button>
+            </div>
+        </nav>
+
+        <div class="admin-layout">
+            <aside class="admin-sidebar">
+                <div class="sidebar-menu">
+                    <div class="menu-item active" data-section="agents">
+                        <span class="menu-icon">🤖</span>
+                        <span class="menu-text">智能体管理</span>
+                    </div>
+                    <div class="menu-item" data-section="knowledge">
+                        <span class="menu-icon">📚</span>
+                        <span class="menu-text">知识库管理</span>
+                    </div>
+                    <div class="menu-item" data-section="prompts">
+                        <span class="menu-icon">📝</span>
+                        <span class="menu-text">提示词管理</span>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="admin-main">
+                <section class="content-section" id="agentsSection">
+                    <div class="section-header">
+                        <h2>🤖 智能体管理</h2>
+                        <button class="btn-primary" id="addAgentBtn">+ 新建智能体</button>
+                    </div>
+                    <div class="agents-list" id="agentsList"></div>
+                </section>
+
+                <section class="content-section" id="knowledgeSection" style="display: none;">
+                    <div class="section-header">
+                        <h2>📚 知识库管理</h2>
+                        <button class="btn-primary" id="addKbBtn">+ 新建知识库</button>
+                    </div>
+                    <div class="knowledge-list" id="knowledgeList"></div>
+                </section>
+
+                <section class="content-section" id="promptsSection" style="display: none;">
+                    <div class="section-header">
+                        <h2>📝 提示词管理</h2>
+                        <select id="promptAgentSelect" class="form-select">
+                            <option value="">选择智能体...</option>
+                        </select>
+                    </div>
+                    <div class="prompt-editor-container" id="promptEditorContainer" style="display: none;">
+                        <div class="prompt-editor-layout">
+                            <div class="prompt-editor-panel">
+                                <div class="panel-header">
+                                    <span>提示词编辑</span>
+                                    <div class="panel-actions">
+                                        <button class="btn-secondary btn-sm" id="savePromptBtn">💾 保存</button>
+                                        <button class="btn-secondary btn-sm" id="historyPromptBtn">📜 历史版本</button>
+                                    </div>
+                                </div>
+                                <textarea id="promptEditor" class="prompt-textarea" placeholder="在此编辑提示词..."></textarea>
+                            </div>
+                            <div class="prompt-test-panel">
+                                <div class="panel-header">
+                                    <span>测试预览</span>
+                                </div>
+                                <textarea id="testTextInput" class="test-textarea" placeholder="粘贴测试合同文本..."></textarea>
+                                <button class="btn-primary btn-test" id="testPromptBtn">🧪 测试</button>
+                                <div class="test-result" id="testResult"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="agentModal">
+            <div class="modal-header">
+                <h3 id="agentModalTitle">新建智能体</h3>
+                <button class="modal-close" id="closeAgentModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="agentForm">
+                    <input type="hidden" id="agentId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>智能体名称 *</label>
+                            <input type="text" id="agentName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>图标</label>
+                            <input type="text" id="agentIcon" placeholder="如：⚖️" maxlength="2">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea id="agentDescription" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>合同类型</label>
+                            <select id="agentContractType" class="form-select">
+                                <option value="general">通用</option>
+                                <option value="property">物权类</option>
+                                <option value="financial">金融类</option>
+                                <option value="construction">建设工程类</option>
+                                <option value="service">服务类</option>
+                                <option value="ip">知识产权与技术类</option>
+                                <option value="labor">人身与劳动类</option>
+                                <option value="equity">公司股权类</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>排序</label>
+                            <input type="number" id="agentSortOrder" value="0" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>绑定知识库</label>
+                        <div id="knowledgeBaseCheckboxes" class="checkbox-group"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>审查重点（每行一个）</label>
+                        <textarea id="agentReviewFocus" rows="3" placeholder="违约责任对等性&#10;付款条款明确性&#10;争议解决方式"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="agentActive" checked>
+                            启用此智能体
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelAgentBtn">取消</button>
+                <button class="btn-primary" id="submitAgentBtn">保存</button>
+            </div>
+        </div>
+
+        <div class="modal" id="kbModal">
+            <div class="modal-header">
+                <h3 id="kbModalTitle">新建知识库</h3>
+                <button class="modal-close" id="closeKbModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="kbForm">
+                    <input type="hidden" id="kbId">
+                    <div class="form-group">
+                        <label>知识库名称 *</label>
+                        <input type="text" id="kbName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea id="kbDescription" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>合同类型</label>
+                        <select id="kbContractType" class="form-select">
+                            <option value="">不限</option>
+                            <option value="property">物权类</option>
+                            <option value="financial">金融类</option>
+                            <option value="construction">建设工程类</option>
+                            <option value="service">服务类</option>
+                            <option value="ip">知识产权与技术类</option>
+                            <option value="labor">人身与劳动类</option>
+                            <option value="equity">公司股权类</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelKbBtn">取消</button>
+                <button class="btn-primary" id="submitKbBtn">保存</button>
+            </div>
+        </div>
+
+        <div class="modal modal-large" id="documentModal">
+            <div class="modal-header">
+                <h3>文档管理</h3>
+                <div class="modal-header-actions">
+                    <button class="btn-secondary btn-sm" id="processAllDocsBtn">批量处理待处理文档</button>
+                    <button class="modal-close" id="closeDocumentModal">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="documentFile" accept=".txt,.pdf,.docx" multiple>
+                    <p>拖拽文件到此处，或点击上传</p>
+                    <p class="upload-hint">支持 TXT、PDF、Word(.docx) 格式，单文件最大10MB</p>
+                </div>
+                <div class="documents-list" id="documentsList"></div>
+            </div>
+        </div>
+
+        <div class="modal" id="historyModal">
+            <div class="modal-header">
+                <h3>历史版本</h3>
+                <button class="modal-close" id="closeHistoryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-list" id="promptHistoryList"></div>
+            </div>
+        </div>
+
+        <div class="modal" id="searchTestModal">
+            <div class="modal-header">
+                <h3>检索测试</h3>
+                <button class="modal-close" id="closeSearchTestModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>测试查询</label>
+                    <input type="text" id="searchTestQuery" placeholder="输入查询内容...">
+                </div>
+                <button class="btn-primary" id="runSearchTestBtn">搜索</button>
+                <div class="search-results" id="searchTestResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module" src="js/admin/main.js"></script>
+</body>
+</html>
