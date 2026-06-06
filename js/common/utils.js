@@ -4,7 +4,9 @@ export const CONFIG = {
     MAX_RISKS: 8,
     CONTEXT_LENGTH: 15,
     MAX_CONTRACT_LENGTH: 30000,
-    API_BASE_URL: window.location.origin,
+    API_BASE_URL: window.location.hostname === 'athensyh.github.io' 
+        ? 'https://contract-server-pobb.onrender.com' 
+        : window.location.origin,
     HISTORY_KEY: 'contract_review_history',
     MAX_HISTORY_ITEMS: 50,
     MAX_CONTRACT_PREVIEW: 5000
