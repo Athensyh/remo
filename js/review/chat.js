@@ -1,7 +1,7 @@
 import { ChatHistoryManager } from '../common/storage.js';
-import { showToast } from '../common/utils.js';
+import { showToast, CONFIG } from '../common/utils.js';
 
-const CHAT_API_URL = '/api/chat/stream';
+const CHAT_API_URL = `${CONFIG.API_BASE_URL}/api/chat/stream`;
 
 const QUICK_ACTIONS = [
     { id: 'suggestion', label: '📝 修改建议', message: '请给我具体的修改建议' },
