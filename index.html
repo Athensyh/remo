@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI合同审查助手</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/review.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>AI合同审查助手</h1>
+        <div class="navbar-actions">
+            <button class="history-toggle" id="historyToggle" title="历史记录">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </button>
+            <button class="chat-toggle" id="chatToggle" title="法律助手">
+                <span class="chat-icon">💬</span>
+                <span class="chat-label">法律助手</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="history-overlay" id="historyOverlay"></div>
+
+    <div class="app-layout">
+        <aside class="history-sidebar" id="historySidebar">
+            <div class="history-header">
+                <span>📜 审查历史</span>
+                <button class="history-close" id="historyClose">✕</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">暂无历史记录</div>
+            </div>
+            <div class="history-footer">
+                <span class="history-storage" id="historyStorage">已用 0KB</span>
+                <button class="history-clear-btn" id="historyClearBtn">清空全部</button>
+            </div>
+        </aside>
+
+        <main class="main-container">
+        <div class="content-area">
+            <section class="input-section">
+                <h2 class="section-title">合同内容输入</h2>
+                
+                <div class="agent-selector" id="agentSelector">
+                    <div class="agent-selector-header">
+                        <span>选择审查类型</span>
+                        <span class="ai-recommend" id="aiRecommend" style="display: none;">
+                            💡 AI推荐：<span id="recommendAgent"></span>
+                        </span>
+                    </div>
+                    <div class="agent-list" id="agentList">
+                        <div class="agent-loading">加载中...</div>
+                    </div>
+                </div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <div class="upload-text">拖拽文件到此处，或点击上传</div>
+                    <div class="upload-hint">支持 TXT、PDF、Word(.docx) 格式，最大 10MB</div>
+                    <input type="file" class="file-input" id="fileInput" accept=".txt,.pdf,.docx">
+                </div>
+                <div class="file-info" id="fileInfo">
+                    <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <div class="file-details">
+                        <div class="file-name" id="fileName"></div>
+                        <div class="file-size" id="fileSize"></div>
+                    </div>
+                    <svg class="file-remove" id="fileRemove" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </div>
+                <textarea id="contractInput" placeholder="或直接在此粘贴合同文本内容...&#10;&#10;支持各类合同文本，如：&#10;• 劳动合同&#10;• 租赁合同&#10;• 买卖合同&#10;• 服务合同&#10;• 借款合同等"></textarea>
+                <div class="error-message" id="errorMessage">请输入合同内容后再进行审查</div>
+                <div class="button-group">
+                    <button class="btn btn-primary" id="reviewBtn">
+                        <span class="loading-spinner"></span>
+                        <span class="btn-text">开始审查</span>
+                    </button>
+                    <button class="btn btn-secondary" id="clearBtn">清空重置</button>
+                </div>
+            </section>
+
+            <section class="result-section">
+                <h2 class="section-title">审查结果</h2>
+                <div class="result-placeholder" id="resultPlaceholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p>请输入合同内容并点击"开始审查"</p>
+                </div>
+                <div class="result-content" id="resultContent">
+                    <div class="overview-section">
+                        <div class="overview-left">
+                            <div class="score-card-new">
+                                <div class="score-circle-new" id="scoreCircle">
+                                    <svg viewBox="0 0 36 36">
+                                        <path class="score-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                        <path class="score-fill" id="scoreFill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                    </svg>
+                                    <div class="score-value" id="scoreValue">--</div>
+                                </div>
+                                <div class="score-label">风险评分</div>
+                            </div>
+                            <div class="stats-row">
+                                <div class="stat-item high" onclick="filterRisks('high')">
+                                    <span class="stat-num" id="highCount">0</span>
+                                    <span class="stat-label">高风险</span>
+                                </div>
+                                <div class="stat-item medium" onclick="filterRisks('medium')">
+                                    <span class="stat-num" id="mediumCount">0</span>
+                                    <span class="stat-label">中风险</span>
+                                </div>
+                                <div class="stat-item low" onclick="filterRisks('low')">
+                                    <span class="stat-num" id="lowCount">0</span>
+                                    <span class="stat-label">低风险</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="overview-right">
+                            <div class="summary-title">📋 整体评价</div>
+                            <div class="summary-text" id="summaryText"></div>
+                            <div class="key-terms-section">
+                                <div class="key-terms-title">🏷️ 关键条款</div>
+                                <div class="key-terms-list" id="keyTermsList"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-section">
+                        <div class="filter-tabs">
+                            <button class="filter-tab active" data-filter="all">全部风险</button>
+                            <button class="filter-tab" data-filter="high">🔴 高风险</button>
+                            <button class="filter-tab" data-filter="medium">🟡 中风险</button>
+                            <button class="filter-tab" data-filter="low">🟢 低风险</button>
+                        </div>
+                        <div class="filter-search">
+                            <input type="text" id="riskSearchInput" placeholder="搜索条款内容...">
+                        </div>
+                        <div class="batch-actions">
+                            <button class="batch-btn" onclick="copyBatchSuggestions('high')">复制高风险</button>
+                            <button class="batch-btn" onclick="copyBatchSuggestions('medium')">复制中风险</button>
+                            <button class="batch-btn" onclick="copyAllRisks()">复制全部</button>
+                        </div>
+                    </div>
+
+                    <div class="main-layout">
+                        <div class="risk-cards-panel">
+                            <div class="risk-cards-list" id="riskCardsList"></div>
+                        </div>
+                        <div class="side-panel">
+                            <div class="original-text-section collapsed" id="originalTextSection">
+                                <div class="section-toggle" onclick="toggleOriginalText()">
+                                    <span>📄 合同原文</span>
+                                    <span class="toggle-icon">▼</span>
+                                </div>
+                                <div class="original-text-content" id="originalText"></div>
+                            </div>
+                            <div class="export-section">
+                                <button class="export-btn" id="exportTxtBtn">
+                                    <span>📄</span> 导出TXT
+                                </button>
+                                <button class="export-btn" id="exportHtmlBtn">
+                                    <span>🌐</span> 导出HTML
+                                </button>
+                                <button class="export-btn" id="exportPdfBtn">
+                                    <span>📕</span> 导出PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    </div>
+
+    <script type="module" src="js/review/main.js"></script>
+</body>
+</html>
